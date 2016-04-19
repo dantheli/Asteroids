@@ -146,10 +146,6 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         asteroidImageView.image = UIImage(named: "asteroid")!
         arena.addSubview(asteroidImageView)
         
-        UIView.animateWithDuration(1, delay: 0, options: [.Repeat, .CurveLinear], animations: {
-            asteroidImageView.transform = CGAffineTransformRotate(asteroidImageView.transform, CGFloat(M_PI))
-            }, completion: nil)
-        
         arena.bringSubviewToFront(pauseButton)
         arena.bringSubviewToFront(scoreLabel)
         
@@ -450,19 +446,21 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
     private var location: CGPoint? = nil
     private var forceValues = [CGFloat]()
     
+    private var isDraggingShip: Bool = false
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         for touch in touches {
             force = touch.force
             location = touch.locationInView(view)
             if CGRectContainsPoint(interactiveShipImageView.frame, touch.locationInView(arena)) {
                 interactiveShipImageView.image = UIImage(named: "spaceshipwithfire")
+                isDraggingShip = true
             }
         }
     }
     
     override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
         for touch in touches {
-            if CGRectContainsPoint(interactiveShipImageView.frame, touch.locationInView(arena)) {
+            if isDraggingShip {
                 interactiveShipImageView.center = touch.locationInView(arena)
                 animator.updateItemUsingCurrentState(interactiveShipImageView)
                 force = touch.force
@@ -490,6 +488,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
     override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
         force = 0
         location = nil
+        isDraggingShip = false
         for touch in touches {
             if CGRectContainsPoint(interactiveShipImageView.frame, touch.locationInView(arena)) {
                 interactiveShipImageView.image = UIImage(named: "spaceshipwithoutfire")
@@ -501,14 +500,13 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         pressed = true
         
         // Shoot lazer
-        print(interactiveShipImageView.center.x)
-        let laser = UIView(frame: CGRectMake(interactiveShipImageView.center.x, interactiveShipImageView.center.y - 95, 2, 40))
+        let laser = UIView(frame: CGRectMake(interactiveShipImageView.center.x, interactiveShipImageView.center.y - 95, 1, 40))
         laser.backgroundColor = UIColor.redColor()
         arena.addSubview(laser)
         
         let pusher = UIPushBehavior(items: [laser], mode: .Instantaneous)
         pusher.active = true
-        pusher.setAngle(CGFloat(2*M_PI), magnitude: 0.2)
+        pusher.setAngle(CGFloat(-M_PI/2), magnitude: 0.1)
         laserPushers.append(pusher)
         laserDict[laser] = pusher
         animator.addBehavior(pusher)
