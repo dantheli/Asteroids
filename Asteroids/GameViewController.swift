@@ -9,23 +9,26 @@
 import UIKit
 import AudioToolbox
 
+enum Difficulty {
+    case Easy
+    case Medium
+    case Hard
+}
+
 class GameViewController: UIViewController, UIGestureRecognizerDelegate, UICollisionBehaviorDelegate {
     
-    var shipImageView: UIImageView!
-    var interactiveShipImageView: UIImageView!
+    // MARK: - ImageViews
     
+    private var shipImageView: UIImageView!
+    private var interactiveShipImageView: UIImageView!
     
-    // Pause Menu
+    // MARK: - IB Connections
     
     @IBOutlet weak var pauseView: UIVisualEffectView!
-    
     @IBOutlet weak var pauseButton: UIButton!
     @IBAction func pauseButton(sender: UIButton) {
-        
         asteroidTimer.invalidate()
-        
         animator.removeAllBehaviors()
-        
         pauseView.hidden = false
         view.bringSubviewToFront(pauseView)
         UIView.animateWithDuration(0.5, animations: {
@@ -35,6 +38,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
             self.pauseView.effect = UIBlurEffect(style: .Dark)
         })
     }
+    
     @IBOutlet weak var resumeButton: UIButton!
     @IBAction func resumeButton(sender: UIButton) {
         UIView.animateWithDuration(0.5, animations: {
@@ -44,10 +48,11 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
             self.pauseView.effect = nil
             }, completion: { Void in
                 self.pauseView.hidden = true
-                self.asteroidTimer = NSTimer.scheduledTimerWithTimeInterval(self.asteroidInterval, target: self, selector: "asteroidTimerFired:", userInfo: nil, repeats: true)
+                self.asteroidTimer = NSTimer.scheduledTimerWithTimeInterval(self.asteroidInterval, target: self, selector: #selector(GameViewController.asteroidTimerFired(_:)), userInfo: nil, repeats: true)
                 self.animator.addBehavior(self.collider)
         })
     }
+    
     @IBOutlet weak var restartButton: UIButton!
     @IBAction func restartButton(sender: UIButton) {
         UIView.animateWithDuration(0.5, animations: {
@@ -70,6 +75,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
                 self.prepareForGame()
         })
     }
+    
     @IBOutlet weak var mainMenuButton: UIButton!
     @IBAction func mainMenuButton(sender: UIButton) {
         let alertController = UIAlertController(title: "Really return to Main Menu?", message: "Unsaved game data will be lost", preferredStyle: .Alert)
@@ -85,18 +91,15 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         presentViewController(alertController, animated: true, completion: nil)
     }
     
-    
-    
-    
     @IBOutlet weak var countdownLabel: UILabel!
-    
     @IBOutlet weak var scoreLabel: UILabel!
-    
     @IBOutlet weak var difficultyLabel: UILabel!
+    
+    // MARK: - Game Properties
     
     var difficulty: Difficulty = .Easy
     
-    var _score = 0
+    private var _score = 0
     var score: Int {
         get {
             return _score
@@ -106,19 +109,19 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         }
     }
     
+    // MARK: - Mechanics
     
+    private var animator: UIDynamicAnimator!
+    private var collider: UICollisionBehavior!
+    private var asteroidTimer: NSTimer!
+    private var pusherArray = [UIPushBehavior]()
     
-    // Mechanics
+    private var asteroidInterval: NSTimeInterval!
+    private var asteroidSize: CGFloat!
+    private var asteroidSpeed: Double!
     
-    var animator: UIDynamicAnimator!
-    var collider: UICollisionBehavior!
-    var asteroidTimer: NSTimer!
-    var pusherArray = [UIPushBehavior]()
-    
-    
-    var asteroidInterval: NSTimeInterval!
-    var asteroidSize: CGFloat!
-    var asteroidSpeed: Double!
+    private var laserDict = [UIView : UIPushBehavior]()
+    private var laserPushers = [UIPushBehavior]()
     
     func shipPanGesture(sender: UIPanGestureRecognizer) {
         let shipView = sender.view!
@@ -209,7 +212,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         }
     }
     
-    // Outlets
+    // MARK: - Game Over IB Connections
     
     var arena: UIView!
     
@@ -230,16 +233,15 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         performSegueWithIdentifier("quit", sender: self)
     }
     
-    
-    // View controller functions
+    // MARK: - View Controller Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.multipleTouchEnabled = false
-        
         arena = UIView(frame: CGRectMake(-80, -80, view.frame.width + 160, view.frame.height + 160))
         view.addSubview(arena)
+        
+        view.multipleTouchEnabled = false
         view.clipsToBounds = false
         
         view.bringSubviewToFront(pauseButton)
@@ -248,7 +250,21 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         view.bringSubviewToFront(tryAgainButton)
         view.bringSubviewToFront(gameOverMainMenuButton)
         
-        // Set difficulty measuures
+        setupDifficulty()
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(true)
+        prepareForGame()
+    }
+    
+    override func prefersStatusBarHidden() -> Bool {
+        return true
+    }
+    
+    // MARK: Load and Setup Views
+    
+    func setupDifficulty() {
         switch difficulty {
         case .Easy:
             difficultyLabel.text = "Easy"
@@ -272,28 +288,11 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
             asteroidSpeed = 1.5
             break
         }
-        
     }
     
-    override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(true)
-        prepareForGame()
-    }
+    // MARK: Game Set Up
     
-    override func viewDidAppear(animated: Bool) {
-        super.viewDidAppear(true)
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-    
-    override func prefersStatusBarHidden() -> Bool {
-        return true
-    }
-    
-    func prepareForGame() {
+    private func prepareForGame() {
         
         gameOverLabel.hidden = false
         gameOverScoreLabel.hidden = false
@@ -332,10 +331,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         runStartAnimations()
     }
     
-    
-    // ANIMATIONS
-    
-    func runStartAnimations() {
+    private func runStartAnimations() {
         shipImageView.hidden = false
         
         UIView.animateWithDuration(2, delay: 0, options: [UIViewAnimationOptions.CurveEaseOut], animations: {
@@ -354,7 +350,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         })
     }
     
-    func runCountdownAnimations(from number: Int) {
+    private func runCountdownAnimations(from number: Int) {
         assert(number >= 0, "Countdown must start from a nonnegative number.")
         if number == 0 {
             startGame()
@@ -381,7 +377,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         }
     }
     
-    func startGame() {
+    private func startGame() {
         view.userInteractionEnabled = true
         
         scoreLabel.text = "Score: 0"
@@ -401,14 +397,10 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         collider.translatesReferenceBoundsIntoBoundary = true
         animator.addBehavior(collider)
         
-//        let panGesture = UIPanGestureRecognizer(target: self, action: "shipPanGesture:")
-//        panGesture.delegate = self
-//        interactiveShipImageView.addGestureRecognizer(panGesture)
-        
-        asteroidTimer = NSTimer.scheduledTimerWithTimeInterval(asteroidInterval, target: self, selector: "asteroidTimerFired:", userInfo: nil, repeats: true)
+        asteroidTimer = NSTimer.scheduledTimerWithTimeInterval(asteroidInterval, target: self, selector: #selector(GameViewController.asteroidTimerFired(_:)), userInfo: nil, repeats: true)
     }
     
-    func gameOver() {
+    private func gameOver() {
         AudioServicesPlayAlertSound(SystemSoundID(kSystemSoundID_Vibrate))
         asteroidTimer.invalidate()
         animator.removeAllBehaviors()
@@ -438,30 +430,26 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         
     }
     
-    // Force shooting
+    // MARK: 3D Touch Shooting
     
-    var pressed = false
-    
-    var force: CGFloat = 0.0 {
+    private var pressed = false
+    private var force: CGFloat = 0.0 {
         didSet {
             forceDifferential = force - oldValue
         }
     }
     
-    let NecessaryForceDifferential: CGFloat = 0.3
-    
-    var forceDifferential: CGFloat = 0.0 {
+    private let NecessaryForceDifferential: CGFloat = 0.3
+    private var forceDifferential: CGFloat = 0.0 {
         didSet {
             forceDoubleDifferential = forceDifferential - oldValue
         }
     }
     
-    var forceDoubleDifferential: CGFloat = 0.0
+    private var forceDoubleDifferential: CGFloat = 0.0
+    private var location: CGPoint? = nil
+    private var forceValues = [CGFloat]()
     
-    var location: CGPoint? = nil
-    
-    var forceValues = [CGFloat]()
-
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         for touch in touches {
             force = touch.force
@@ -509,10 +497,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         }
     }
     
-    var laserDict = [UIView : UIPushBehavior]()
-    var laserPushers = [UIPushBehavior]()
-    
-    func firmPress() {
+    private func firmPress() {
         pressed = true
         
         // Shoot lazer
@@ -523,18 +508,11 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         
         let pusher = UIPushBehavior(items: [laser], mode: .Instantaneous)
         pusher.active = true
-        pusher.setAngle(-CGFloat(M_PI/2), magnitude: 0.2)
+        pusher.setAngle(CGFloat(2*M_PI), magnitude: 0.2)
         laserPushers.append(pusher)
         laserDict[laser] = pusher
         animator.addBehavior(pusher)
-        //ni shao la
         collider.addItem(laser)
     }
 
-}
-
-enum Difficulty {
-    case Easy
-    case Medium
-    case Hard
 }

@@ -2,11 +2,11 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "spaceshipwithfire.png",
       "scale" : "1x"
     },
     {
       "idiom" : "universal",
+      "filename" : "spaceshipwithfire.png",
       "scale" : "2x"
     },
     {

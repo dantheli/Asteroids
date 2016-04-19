@@ -14,7 +14,7 @@ class MenuViewController: UIViewController {
     @IBOutlet weak var menuContainerView: UIView!
     @IBOutlet weak var titleLabel: UILabel!
     
-    var control: HMSegmentedControl!
+    private var control: HMSegmentedControl!
     
     @IBOutlet weak var playButton: UIButton!
     @IBAction func playButton(sender: UIButton) {
@@ -44,11 +44,20 @@ class MenuViewController: UIViewController {
         throwAsteroid()
     }
     
-    var timer: NSTimer!
+    private var timer: NSTimer!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupSegmentedControl()
+        
+        timer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(MenuViewController.timerFired(_:)), userInfo: nil, repeats: true)
+        
+        playButton.layer.cornerRadius = 10
+        
+    }
+    
+    private func setupSegmentedControl() {
         control = HMSegmentedControl(sectionTitles: ["Easy", "Medium", "Hard"])
         control.frame = CGRectMake(0, 0, ScreenWidth, 40)
         control.center = CGPointMake(ScreenWidth/2, ScreenHeight/2)
@@ -58,14 +67,19 @@ class MenuViewController: UIViewController {
         control.selectionStyle = HMSegmentedControlSelectionStyleFullWidthStripe
         control.addTarget(self, action: nil, forControlEvents: .ValueChanged)
         menuContainerView.addSubview(control)
-        
-        timer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: "timerFired:", userInfo: nil, repeats: true)
-        
-        playButton.layer.cornerRadius = 10
-        
     }
     
-    var notified = false
+    private var notified: Bool {
+        get {
+            let defaults = NSUserDefaults.standardUserDefaults()
+            return defaults.boolForKey("notified3d")
+        }
+        set {
+            let defaults = NSUserDefaults.standardUserDefaults()
+            defaults.setBool(newValue, forKey: "notified3d")
+        }
+    }
+    
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(true)
         
@@ -82,6 +96,7 @@ class MenuViewController: UIViewController {
             notified = true
         }
     }
+    
     func throwAsteroid() {
         
         let side = arc4random_uniform(3)
@@ -159,12 +174,6 @@ class MenuViewController: UIViewController {
         
     }
     
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
-    
     override func preferredStatusBarStyle() -> UIStatusBarStyle {
         return .LightContent
     }
@@ -183,7 +192,7 @@ class MenuViewController: UIViewController {
         throwAsteroid()
         throwAsteroid()
         
-        timer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: "timerFired:", userInfo: nil, repeats: true)
+        timer = NSTimer.scheduledTimerWithTimeInterval(0.5, target: self, selector: #selector(MenuViewController.timerFired(_:)), userInfo: nil, repeats: true)
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
