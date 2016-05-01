@@ -500,7 +500,7 @@ class GameViewController: UIViewController, UIGestureRecognizerDelegate, UIColli
         pressed = true
         
         // Shoot lazer
-        let laser = UIView(frame: CGRectMake(interactiveShipImageView.center.x, interactiveShipImageView.center.y - 95, 1, 40))
+        let laser = UIView(frame: CGRectMake(interactiveShipImageView.center.x, interactiveShipImageView.center.y - 120, 1, 60))
         laser.backgroundColor = UIColor.redColor()
         arena.addSubview(laser)
         

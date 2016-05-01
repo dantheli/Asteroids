@@ -22,7 +22,9 @@ class MenuViewController: UIViewController {
         UIView.animateWithDuration(0.2, delay: 0.0, options: [UIViewAnimationOptions.CurveEaseIn, UIViewAnimationOptions.BeginFromCurrentState], animations: {
             
             let scale = CGAffineTransformMakeScale(5, 5)
-            self.menuContainerView.transform = scale
+            let offset = -CGFloat(self.control.selectedSegmentIndex - 1) * self.view.frame.width / 3
+            let transform = CGAffineTransformTranslate(scale, offset, 0)
+            self.menuContainerView.transform = transform
             self.menuContainerView.alpha = 0
             
             self.backgroundImageView.alpha = 0
@@ -89,8 +91,8 @@ class MenuViewController: UIViewController {
             }, completion: nil)
         
         if !notified {
-            let alertController = UIAlertController(title: "Notice About Shooting Lasers", message: "Only force-touch enabled devices (iPhone 6s and 6s+ and newer) can utilize the shooting capability. Test this out on a real device. To shoot, press firmly on the spaceship while dragging it.", preferredStyle: .Alert)
-            let okayAction = UIAlertAction(title: "Got it", style: .Default, handler: nil)
+            let alertController = UIAlertController(title: "3D Touch Lasers", message: "3D Touch-enabled devices (iPhone 6s and 6s+ and newer) can utilize the shooting capability. To shoot, press firmly on the spaceship while dragging it.", preferredStyle: .Alert)
+            let okayAction = UIAlertAction(title: "Got it!", style: .Default, handler: nil)
             alertController.addAction(okayAction)
             presentViewController(alertController, animated: true, completion: nil)
             notified = true
